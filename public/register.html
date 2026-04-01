@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - Simple Site</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">SimpleSite</div>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/about">About Us</a>
+        <a href="/product">Product</a>
+        <a href="/contact">Contact Us</a>
+        <a href="/register" class="btn active">Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-section">
+      <h1>Register</h1>
+      <form class="form" method="POST" action="/register" novalidate>
+        <!-- COD NOU: aici afisam mesajele de eroare venite din server -->
+        <p id="form-message" style="color: #c62828; margin-bottom: 16px;"></p>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required />
+        </div>
+        <!-- COD NOU: camp pentru confirmarea parolei -->
+        <div class="form-group">
+          <label for="confirm-password">Confirm Password</label>
+          <input type="password" id="confirm-password" name="confirm-password" required />
+        </div>
+        <div class="form-group">
+          <label for="age">Age</label>
+          <!-- COD NOU: am scos min ca sa afisam mesajul nostru personalizat -->
+          <input type="number" id="age" name="age" required />
+        </div>
+        <button type="submit" class="btn primary">Înregistrează-te</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      &copy; <span id="year"></span> SimpleSite. Toate drepturile rezervate.
+    </div>
+  </footer>
+
+  <script>
+    // COD NOU: validare in browser pentru password si confirm-password
+    const form = document.querySelector('.form');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    // COD NOU: luam campul age pentru validare in browser
+    const ageInput = document.getElementById('age');
+    // COD NOU: zona in care afisam erorile din UI
+    const formMessage = document.getElementById('form-message');
+
+    function validatePasswords() {
+      if (confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
+        confirmPasswordInput.setCustomValidity('Parolele nu coincid.');
+      } else {
+        confirmPasswordInput.setCustomValidity('');
+      }
+    }
+
+    passwordInput.addEventListener('input', validatePasswords);
+    confirmPasswordInput.addEventListener('input', validatePasswords);
+
+    // COD NOU: validare in browser pentru age > 18
+    function validateAge() {
+      if (ageInput.value && Number(ageInput.value) <= 18) {
+        ageInput.setCustomValidity('Varsta trebuie sa fie mai mare de 18.');
+      } else {
+        ageInput.setCustomValidity('');
+      }
+    }
+
+    ageInput.addEventListener('input', validateAge);
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      formMessage.textContent = '';
+
+      validatePasswords();
+      validateAge();
+
+      // COD NOU: afisam mesajele noastre in UI, fara popup-ul default al browserului
+      if (!username.value || !email.value || !passwordInput.value || !confirmPasswordInput.value || !ageInput.value) {
+        formMessage.textContent = 'Toate campurile sunt obligatorii.';
+        return;
+      }
+
+      if (passwordInput.value !== confirmPasswordInput.value) {
+        formMessage.textContent = 'Parolele nu coincid.';
+        return;
+      }
+
+      if (Number(ageInput.value) <= 18) {
+        formMessage.textContent = 'Varsta trebuie sa fie mai mare de 18.';
+        return;
+      }
+
+      // COD NOU: trimitem formularul cu fetch ca sa putem afisa exact mesajul din server
+      fetch('/register', {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(form)),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+        .then(async (response) => {
+          if (response.ok) {
+            window.location.href = '/register-success.html';
+            return;
+          }
+
+          const message = await response.text();
+          formMessage.textContent = message;
+        })
+        .catch(() => {
+          formMessage.textContent = 'A aparut o eroare la trimiterea formularului.';
+        });
+    });
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

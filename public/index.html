@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home - Simple Site</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">SimpleSite</div>
+      <nav class="nav">
+        <a href="/">Home</a>
+        <a href="/about">About Us</a>
+        <a href="/product">Product</a>
+        <a href="/contact">Contact Us</a>
+        <a href="/register" class="btn">Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Un website simplu și curat</h1>
+      <p>Exemplu de site cu pagini de bază și formular de înregistrare cu salvare în MySQL.</p>
+      <a href="/register" class="btn primary">Înregistrează-te acum</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      &copy; <span id="year"></span> SimpleSite. Toate drepturile rezervate.
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>
