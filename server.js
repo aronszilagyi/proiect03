@@ -13,7 +13,7 @@ const pool = mysql.createPool({
   host: process.env.MYSQL_HOST || '127.0.0.1',
   port: process.env.MYSQL_PORT || 3306,
   user: process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_PASS || '',
+  password: process.env.MYSQL_PASS || 'Welcome.1997',
   database: process.env.MYSQL_DB || 'myDB',
 });
 
@@ -26,7 +26,8 @@ app.get('/about', (req, res) => renderPage(res, 'about.html'));
 app.get('/product', (req, res) => renderPage(res, 'product.html'));
 app.get('/contact', (req, res) => renderPage(res, 'contact.html'));
 app.get('/register', (req, res) => renderPage(res, 'register.html'));
-// COD NOU: API GET care returneaza userul dupa id
+app.get('/register-success', (req, res) => renderPage(res, 'register-success.html'));
+
 app.get('/api/users/:id', async (req, res) => {
   const userId = Number.parseInt(req.params.id, 10);
 
@@ -50,7 +51,7 @@ app.get('/api/users/:id', async (req, res) => {
     return res.status(500).json({ error: 'A aparut o eroare la preluarea utilizatorului.' });
   }
 });
-// COD NOU: API DELETE care sterge userul dupa id
+
 app.delete('/api/users/:id', async (req, res) => {
   const userId = Number.parseInt(req.params.id, 10);
 
@@ -77,22 +78,17 @@ app.delete('/api/users/:id', async (req, res) => {
 
 app.post('/register', async (req, res) => {
   const { username, email, password, age } = req.body;
-  // COD NOU: luam valoarea din campul confirm-password
   const confirmPassword = req.body['confirm-password'];
-  // COD NOU: convertim age la numar pentru validare
   const parsedAge = Number(age);
 
-  // COD NOU: verificam sa fie completate toate campurile, inclusiv confirm-password
   if (!username || !email || !password || !confirmPassword || !age) {
     return res.status(400).send('Toate câmpurile sunt obligatorii.');
   }
 
-  // COD NOU: verificam daca password si confirm-password sunt identice
   if (password !== confirmPassword) {
     return res.status(400).send('Parolele nu coincid.');
   }
 
-  // COD NOU: verificam daca varsta este strict mai mare decat 18
   if (!Number.isFinite(parsedAge) || parsedAge <= 18) {
     return res.status(400).send('Varsta trebuie sa fie mai mare de 18.');
   }
@@ -100,13 +96,11 @@ app.post('/register', async (req, res) => {
   try {
     const connection = await pool.getConnection();
     try {
-      // COD NOU: verificam daca exista deja un utilizator cu acelasi username si email
       const [existingUsers] = await connection.execute(
         'SELECT id FROM users WHERE username = ? AND email = ? LIMIT 1',
         [username, email]
       );
 
-      // COD NOU: daca utilizatorul exista deja, oprim inregistrarea si afisam un mesaj
       if (existingUsers.length > 0) {
         connection.release();
         return res.status(409).send('Utilizatorul exista deja.');
@@ -117,7 +111,7 @@ app.post('/register', async (req, res) => {
         [username, email, password, parsedAge]
       );
       connection.release();
-      res.sendFile(path.join(__dirname, 'public', 'register-success.html'));
+      res.redirect('/register-success');
     } catch (err) {
       connection.release();
       console.error(err);
@@ -129,6 +123,26 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server pornit pe http://localhost:${PORT}`);
+async function waitForDB(retries = 10, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const conn = await pool.getConnection();
+      conn.release();
+      console.log('Conectat la MySQL!');
+      return;
+    } catch (err) {
+      console.log(`MySQL nu e gata, reîncerc... (${i + 1}/${retries})`);
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
+  throw new Error('Nu s-a putut conecta la MySQL.');
+}
+
+waitForDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server pornit pe http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error(err);
+  process.exit(1);
 });

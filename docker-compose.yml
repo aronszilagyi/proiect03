@@ -25,5 +25,18 @@ services:
       timeout: 10s
       retries: 10
 
+  cypress:
+    image: cypress/included:14.5.4
+    depends_on:
+      app:
+        condition: service_started
+    environment:
+      - CYPRESS_baseUrl=http://app:3000
+    volumes:
+      - ./cypress/cypress:/e2e/cypress
+      - ./cypress.config.js:/e2e/cypress.config.js
+    working_dir: /e2e
+    command: cypress run
+
 volumes:
   mysql_data:
