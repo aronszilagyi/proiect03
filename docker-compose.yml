@@ -8,6 +8,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 10s
 
   mysql:
     image: mysql:8.0
@@ -29,7 +35,7 @@ services:
     image: cypress/included:14.5.4
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy   # ← schimbat din service_started
     environment:
       - CYPRESS_baseUrl=http://app:3000
     volumes:
